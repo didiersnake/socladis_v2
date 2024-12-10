@@ -1,0 +1,26 @@
+version: '3.9'
+
+services:
+  # MongoDB services
+  mongo_db:
+    container_name: mongo_socladis
+    image: mongo:latest
+    restart: always
+    ports:
+      - 2717:27017
+    volumes:
+      - mongo_db:/data/db
+
+  # Node API Service
+  nodejs:
+    build: .
+    ports:
+      - 5000:5000
+    environment:
+      MONGODB: "mongodb://mongo_db:27017/socladis"
+      PORT: 5000
+    depends_on:
+      - mongo_db
+
+volumes:
+  mongo_db: {}
