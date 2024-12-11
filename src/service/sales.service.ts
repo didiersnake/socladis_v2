@@ -158,16 +158,19 @@ export async function exportRistourn(req:Request, res:Response, sales: any, star
 
     archive.append(doc, { name: pdfPath });
 
+    let s_date = new Date(startDate);
+    let e_date = new Date(endDate);
+    s_date.setDate(s_date.getDate() + 1);
+    e_date.setDate(s_date.getDate() + 1);
+
     // Add header with title and period
     doc.fontSize(16).text("Socladis Sarl", { align: "center" }).moveDown();
     doc
       .fontSize(14)
       .text(
-        `État de Ristourne sur la période du ${new Date(
-          startDate
-        ).toLocaleDateString("en-GB")} au ${new Date(
-          endDate
-        ).toLocaleDateString("en-GB")}`,
+        `État de Ristourne sur la période du ${s_date.toLocaleDateString(
+          "en-GB"
+        )} au ${e_date.toLocaleDateString("en-GB")}`,
         { align: "center" }
       )
       .moveDown();
