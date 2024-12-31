@@ -35,7 +35,7 @@ export async function allSalesPaginated({
   query,
   filterData,
   startDate,
-  endDate
+  endDate,
 }: SalesQueryParams & { startDate?: string; endDate?: string }) {
   const skip = (pageIndex - 1) * pageSize; // Calculate documents to skip based on pageIndex and pageSize
   const limit = pageSize;
@@ -44,7 +44,7 @@ export async function allSalesPaginated({
   const filter: Record<string, any> = {};
 
   if (query) {
-    filter.invoice_number = { $regex: query, $options: "i" }; // Search by name, case-insensitive
+    filter.clientName = { $regex: query, $options: "i" }; // Search by name, case-insensitive
   }
 
   // console.log(startDate, endDate);
@@ -103,8 +103,7 @@ export async function allSalesPaginated({
 
 type QueryFilter<T> = FilterQuery<T>;
 
-export async function getSaleByRange(startDate:string, endDate:string) {
-
+export async function getSaleByRange(startDate: string, endDate: string) {
   const filter: QueryFilter<any> = { $expr: { $and: [] } };
 
   if (startDate) {
@@ -118,20 +117,24 @@ export async function getSaleByRange(startDate:string, endDate:string) {
       $lte: [{ $dateFromString: { dateString: "$date" } }, new Date(endDate)],
     });
   }
-  
+
   if (filter.$expr.$and.length === 0) {
     delete filter.$expr;
   }
 
   // Execute the query (Mongoose example)
   const data = await SalesModel.find(filter);
-  return data
+  return data;
 }
 
-
-export async function exportRistourn(req:Request, res:Response, sales: any, startDate:string, endDate:string ){
-
-  const users = await userModel.find()
+export async function exportRistourn(
+  req: Request,
+  res: Response,
+  sales: any,
+  startDate: string,
+  endDate: string
+) {
+  const users = await userModel.find();
 
   const clients = groupSalesByClient(sales);
 
@@ -144,7 +147,7 @@ export async function exportRistourn(req:Request, res:Response, sales: any, star
 
   const archive = archiver("zip", { zlib: { level: 9 } });
 
-  archive.on("error", (err:any) => {
+  archive.on("error", (err: any) => {
     console.error("Archiver Error:", err);
     res.status(500).send("Error generating ZIP file");
   });
@@ -161,7 +164,7 @@ export async function exportRistourn(req:Request, res:Response, sales: any, star
     let s_date = new Date(startDate);
     let e_date = new Date(endDate);
     s_date.setDate(s_date.getDate() + 1);
-    e_date.setDate(s_date.getDate() + 1);
+    e_date.setDate(e_date.getDate() + 1);
 
     // Add header with title and period
     doc.fontSize(16).text("Socladis Sarl", { align: "center" }).moveDown();
@@ -210,11 +213,9 @@ export async function exportRistourn(req:Request, res:Response, sales: any, star
       // Check if we need a new page
       if (doc.y > doc.page.height - 100) {
         doc.addPage();
-        doc
-          .fontSize(14)
-          .text("#Facture      Date                Ristourne", {
-            align: "center",
-          });
+        doc.fontSize(14).text("#Facture      Date                Ristourne", {
+          align: "center",
+        });
         doc.moveDown();
       }
     });
@@ -249,7 +250,6 @@ export async function exportRistourn(req:Request, res:Response, sales: any, star
 
   // Finalize the ZIP archive
   await archive.finalize();
-   
 }
 
 //get user by id
