@@ -53,6 +53,35 @@ export function getAllAchats(){
   return achatModel.find()
 }
 
+export async function getUserStatistic() {
+  const currentMonth = new Date().getMonth() + 1; // 1-based month
+  const currentYear = new Date().getFullYear();
+
+  const data = await achatModel.find({
+    date: { $exists: true }, // Ensure createdAt exists
+  });
+
+  const filteredData = data.filter((doc) => {
+    const date = new Date(doc.date); // Convert string to Date in JS
+    return (
+      date.getMonth() + 1 === currentMonth && // Compare month
+      date.getFullYear() === currentYear // Compare year
+    );
+  });
+
+  const achat = filteredData
+    .filter((item) => item.purchase_type === "achat")
+    .reduce((acc, cur) => acc + Number(cur.quantity), 0);
+  const commission = filteredData
+    .filter((item) => item.purchase_type === "commission")
+    .reduce((acc, cur) => acc + Number(cur.quantity), 0);
+  const promotion = filteredData
+    .filter((item) => item.purchase_type === "promotion")
+    .reduce((acc, cur) => acc + Number(cur.quantity), 0);
+  return { achat, commission, promotion };
+}
+
+
 type QueryFilter<T> = FilterQuery<T>;
 
 export async function getAchatByRange(startDate: string, endDate: string) {

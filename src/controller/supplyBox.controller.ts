@@ -9,7 +9,8 @@ import {
   getAllSupplyBoxs,
   getSupplyBoxById,
   getSupplyBoxByRange,
-  updateSupplyBoxById
+  updateSupplyBoxById,
+  getUserStatistic,
 } from "../service/supplyBox.service";
 
 export async function createSupplyBoxHandler(
@@ -21,10 +22,20 @@ export async function createSupplyBoxHandler(
   try {
     const stock = await createSupplyBox(body);
 
-    return res.status(201).json([{message:"SupplyBoxs Added Successfully",stockInfo:stock}]);
+    return res
+      .status(201)
+      .json([{ message: "SupplyBoxs Added Successfully", stockInfo: stock }]);
   } catch (e: any) {
- 
     return res.status(500).send("SupplyBox exists");
+  }
+}
+
+export async function getUserStatisticData(req: Request, res: Response) {
+  try {
+    const result = await getUserStatistic();
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json([{ message: "Internal Server Error" }]);
   }
 }
 

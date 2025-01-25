@@ -10,8 +10,8 @@ import cors from 'cors';
 const app = express();
 
 const corsOptions = {
-  // origin: "http://localhost:3000",
-  origin: "http://82.165.212.140:3000",
+  origin: "http://localhost:3000",
+  // origin: "http://82.165.212.140:3000",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: [

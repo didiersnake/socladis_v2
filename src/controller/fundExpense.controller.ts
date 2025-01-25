@@ -9,7 +9,8 @@ import {
   getAllFundExpense,
   getFundExpenseById,
   getFundExpenseByRange,
-  updateFundExpenseById
+  updateFundExpenseById,
+  getUserStatistic,
 } from "../service/fundExpense.service";
 
 export async function createFundExpenseHandler(
@@ -21,13 +22,22 @@ export async function createFundExpenseHandler(
   try {
     const stock = await createFundExpense(body);
 
-    return res.status(201).json([{message:"FundExpenses Added Successfully",stockInfo:stock}]);
+    return res
+      .status(201)
+      .json([{ message: "FundExpenses Added Successfully", stockInfo: stock }]);
   } catch (e: any) {
- 
     return res.status(500).send("FundExpense exists");
   }
 }
 
+export async function getUserStatisticData(req: Request, res: Response) {
+  try {
+    const result = await getUserStatistic();
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json([{ message: "Internal Server Error" }]);
+  }
+}
 
 //get all fund expense
 export async function getAllFundExpensesController(req:Request,res:Response){

@@ -45,6 +45,32 @@ export async function getAvarisByRange(startDate: string, endDate: string) {
   return data;
 }
 
+export async function getUserStatistic() {
+  const currentMonth = new Date().getMonth() + 1; // 1-based month
+  const currentYear = new Date().getFullYear();
+
+  const data = await avarisModel.find({
+    date: { $exists: true }, // Ensure createdAt exists
+  });
+
+  const filteredData = data.filter((doc) => {
+    const date = new Date(doc.date); // Convert string to Date in JS
+    return (
+      date.getMonth() + 1 === currentMonth && // Compare month
+      date.getFullYear() === currentYear // Compare year
+    );
+  });
+
+  const magasin = filteredData
+    .filter((item) => item.type === "magasin")
+    .reduce((acc, cur) => acc + Number(cur.quantity), 0);
+  const livraison = filteredData
+    .filter((item) => item.type === "livraison")
+    .reduce((acc, cur) => acc + Number(cur.quantity), 0);
+  return { magasin, livraison };
+}
+
+
 export async function allAvarisPaginated({
   pageIndex,
   pageSize,

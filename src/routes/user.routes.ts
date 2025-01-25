@@ -7,6 +7,7 @@ import {
   getAllUserController,
   getUserByIdController,
   updateUserByIdController,
+  getUserStatisticData,
 } from "../controller/user.controller";
 // import requireUser from "../middleware/requireUser";
 import validateResource from "../middleware/validateResource";
@@ -48,20 +49,11 @@ router.get("/api/all/user/employee", auth, getAllEmployeeController);
 
 router.get("/api/all/user/clients", auth, getAllClientsController);
 
-
 //get specific user
-router.get(
-  "/api/current/user/:id",
-  auth,
-  getUserByIdController
+router.get("/api/current/user/:id", auth, getUserByIdController);
+router.post("/api/all/user/", auth, getAllUserController);
 
-);
-router.post(
-  "/api/all/user/",
-  auth,
-  getAllUserController
-
-);
+router.get("/api/customers-statistic", auth, getUserStatisticData);
 
 //update specific user
 router.put(

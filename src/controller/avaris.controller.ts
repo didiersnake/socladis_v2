@@ -9,10 +9,10 @@ import {
   getAllAvaris,
   getAvariById,
   getAvarisByRange,
-  updateAvariById
+  updateAvariById,
+  getUserStatistic,
 } from "../service/avaris.service";
-import StockModel, { IStock } from "../model/stock.model"
-
+import StockModel, { IStock } from "../model/stock.model";
 
 export async function createAvarisHandler(
   req: Request<{}, {}, CreateAvarisInput>,
@@ -24,29 +24,32 @@ export async function createAvarisHandler(
     const existingStock = await StockModel.findOne({ name: body.name });
 
     if (existingStock) {
-      if (
-        Number(existingStock.quantity) >= Number(body.quantity) 
-      ) {
+      if (Number(existingStock.quantity) >= Number(body.quantity)) {
         let decrementedQuantity = Number(existingStock.quantity);
         decrementedQuantity -= Number(body.quantity);
         existingStock.quantity = decrementedQuantity.toString();
 
         await existingStock.save();
       } else {
-        return res.status(400).json([{ message: 'Not enough quantity in the stock to be removed' }]);
+        return res
+          .status(400)
+          .json([
+            { message: "Not enough quantity in the stock to be removed" },
+          ]);
       }
     } else {
-      return res.status(404).json([{ message: 'Stock not found' }]);
+      return res.status(404).json([{ message: "Stock not found" }]);
     }
 
     const stock = await createAvari(body);
 
-    return res.status(201).json([{message:"Avaris Added Successfully",stockInfo:stock}]);
+    return res
+      .status(201)
+      .json([{ message: "Avaris Added Successfully", stockInfo: stock }]);
   } catch (error) {
     console.error(error);
-    return res.status(500).send('avari exists');
+    return res.status(500).send("avari exists");
   }
-
 }
 
 export async function getAllAvarisController(req: Request, res: Response) {
@@ -78,15 +81,19 @@ export async function getAllAvarisController(req: Request, res: Response) {
 
 export async function getAllAvarisByRange(req: Request, res: Response) {
   try {
-    const {
-      startDate,
-      endDate,
-    } = req.body;
+    const { startDate, endDate } = req.body;
 
-    const sales = await getAvarisByRange(
-      startDate,
-      endDate);
+    const sales = await getAvarisByRange(startDate, endDate);
     res.status(200).json(sales);
+  } catch (error) {
+    res.status(500).json([{ message: "Internal Server Error" }]);
+  }
+}
+
+export async function getUserStatisticData(req: Request, res: Response) {
+  try {
+    const result = await getUserStatistic();
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json([{ message: "Internal Server Error" }]);
   }

@@ -1,5 +1,6 @@
 import { FilterQuery } from "mongoose";
 import fundExpenseModel from "../model/fundExpense.model"
+import { log } from "console";
 
 interface PurchaseQueryParams {
   pageIndex: number;
@@ -9,9 +10,38 @@ interface PurchaseQueryParams {
   filterData?: Record<string, any>;
 }
 
-export function createFundExpense(input:Partial<any>) {
+export function createFundExpense(input: Partial<any>) {
   return fundExpenseModel.create(input);
 }
+
+export async function getUserStatistic() {
+  const currentMonth = new Date().getMonth() + 1; // 1-based month
+  const currentYear = new Date().getFullYear();
+
+  const data = await fundExpenseModel.find({
+    date: { $exists: true }, // Ensure createdAt exists
+  });
+
+  const filteredData = data.filter((doc) => {
+    const date = new Date(doc.date); // Convert string to Date in JS
+    return (
+      date.getMonth() + 1 === currentMonth && // Compare month
+      date.getFullYear() === currentYear // Compare year
+    );
+  });
+
+  const bank = filteredData
+    .filter((item) => item.modif === "versement en banque")
+    .reduce((acc, cur) => acc + Number(cur.amount), 0);
+  const fuel = filteredData
+    .filter((item) => item.modif === "carburant")
+    .reduce((acc, cur) => acc + Number(cur.amount), 0);
+  const current = filteredData
+    .filter((item) => item.modif === "depense courante")
+    .reduce((acc, cur) => acc + Number(cur.amount), 0);
+  return { bank, fuel, current };
+}
+
 
 type QueryFilter<T> = FilterQuery<T>;
 

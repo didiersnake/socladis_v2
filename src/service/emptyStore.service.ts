@@ -45,6 +45,38 @@ export async function getEmptyStoreByRange(startDate: string, endDate: string) {
   return data;
 }
 
+export async function getUserStatistic() {
+  const currentMonth = new Date().getMonth() + 1; // 1-based month
+  const currentYear = new Date().getFullYear();
+
+  const data = await emptyStoreModel.find({
+    date: { $exists: true }, // Ensure createdAt exists
+  });
+
+  const filteredData = data.filter((doc) => {
+    const date = new Date(doc.date); // Convert string to Date in JS
+    return (
+      date.getMonth() + 1 === currentMonth && // Compare month
+      date.getFullYear() === currentYear // Compare year
+    );
+  });
+
+  const casiers = filteredData.reduce(
+    (acc, cur) => acc + Number(cur.cashier),
+    0
+  );
+  const bottles = filteredData.reduce(
+    (acc, cur) => acc + Number(cur.bottle),
+    0
+  );
+  const plastic = filteredData.reduce(
+    (acc, cur) => acc + Number(cur.plastic),
+    0
+  );
+  return { casiers, bottles, plastic };
+}
+
+
 export async function allEmptyStorePaginated({
   pageIndex,
   pageSize,

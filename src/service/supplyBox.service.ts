@@ -1,6 +1,6 @@
 import { FilterQuery } from "mongoose";
 import SupplyBoxsModel from "../model/supplyBox.model"
-
+import { log } from "console";
 
 interface PurchaseQueryParams {
   pageIndex: number;
@@ -8,6 +8,25 @@ interface PurchaseQueryParams {
   sort?: { key: string; order: "asc" | "desc" };
   query?: string;
   filterData?: Record<string, any>;
+}
+
+export async function getUserStatistic() {
+  const currentMonth = new Date().getMonth() + 1; // 1-based month
+  const currentYear = new Date().getFullYear();
+
+  const data = await SupplyBoxsModel.find({
+    date: { $exists: true }, // Ensure createdAt exists
+  });
+
+  const filteredData = data.filter((doc) => {
+    const date = new Date(doc.date); // Convert string to Date in JS
+    return (
+      date.getMonth() + 1 === currentMonth && // Compare month
+      date.getFullYear() === currentYear // Compare year
+    );
+  });
+  const result = filteredData.reduce((acc, cur) => acc + Number(cur.amount), 0);
+  return result;
 }
 
 

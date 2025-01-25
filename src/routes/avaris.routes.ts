@@ -5,14 +5,13 @@ import {
   getAvarisByIdController,
   updateAvarisByIdController,
   getAllAvarisController,
+  getUserStatisticData,
   getAllAvarisControllerUnpaginated,
-  getAllAvarisByRange
+  getAllAvarisByRange,
 } from "../controller/avaris.controller";
 // import requireUser from "../middleware/requireUser";
 import validateResource from "../middleware/validateResource";
-import {
-  createAvarisSchema,
-} from "../schema/avaris.schema";
+import { createAvarisSchema } from "../schema/avaris.schema";
 import { auth } from "../middleware/auth";
 
 const router = express.Router();
@@ -24,17 +23,10 @@ router.post(
 );
 
 //get specific avari
-router.get(
-  "/api/current/avari/:id",
-  auth,
-  getAvarisByIdController
+router.get("/api/current/avari/:id", auth, getAvarisByIdController);
+router.post("/api/all/avaris/", auth, getAllAvarisController);
 
-);
-router.post(
-  "/api/all/avaris/",
-  auth,
-  getAllAvarisController
-);
+router.get("/api/avaris/customers-statistic", auth, getUserStatisticData);
 
 router.post("/api/all/avaris-by-range/", auth, getAllAvarisByRange);
 

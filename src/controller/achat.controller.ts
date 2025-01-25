@@ -9,7 +9,8 @@ import {
   getAchatById,
   updateAchatById,
   allAchatPaginated,
-  getAchatByRange
+  getAchatByRange,
+  getUserStatistic,
 } from "../service/achat.service";
 
 export async function createAchatsHandler(
@@ -21,34 +22,33 @@ export async function createAchatsHandler(
   try {
     const stock = await createAchat(body);
 
-    return res.status(201).json([{message:"Achats Added Successfully",stockInfo:stock}]);
+    return res
+      .status(201)
+      .json([{ message: "Achats Added Successfully", stockInfo: stock }]);
   } catch (e: any) {
- 
     return res.status(500).send("Achat exists");
   }
 }
 
-
 //get all achat
-export async function getAllAchatsControllerUnpaginated(req:Request,res:Response){
-
+export async function getAllAchatsControllerUnpaginated(
+  req: Request,
+  res: Response
+) {
   try {
     const Achat = await getAllAchats();
 
-     res.status(200).json(Achat);
-    
+    res.status(200).json(Achat);
   } catch (error) {
-    res.status(500).json([{ message: 'Internal Server Error' }]);
+    res.status(500).json([{ message: "Internal Server Error" }]);
   }
-
 }
-
 
 export async function getAllAchatByRange(req: Request, res: Response) {
   try {
-        const { startDate, endDate } = req.body;
+    const { startDate, endDate } = req.body;
 
-    const sales = await getAchatByRange( startDate,  endDate );
+    const sales = await getAchatByRange(startDate, endDate);
     res.status(200).json(sales);
   } catch (error) {
     res.status(500).json([{ message: "Internal Server Error" }]);
@@ -77,6 +77,15 @@ export async function getAllAchatController(req: Request, res: Response) {
       endDate,
     });
     res.status(200).json(sales);
+  } catch (error) {
+    res.status(500).json([{ message: "Internal Server Error" }]);
+  }
+}
+
+export async function getUserStatisticData(req: Request, res: Response) {
+  try {
+    const result = await getUserStatistic();
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json([{ message: "Internal Server Error" }]);
   }

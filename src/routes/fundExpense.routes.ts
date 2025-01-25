@@ -6,12 +6,11 @@ import {
   updateFundExpensesByIdController,
   getAllFundExpensesController,
   getAllFundExpensesPaginated,
-  getAllFundExpenseByRange
+  getAllFundExpenseByRange,
+  getUserStatisticData,
 } from "../controller/fundExpense.controller";
 import validateResource from "../middleware/validateResource";
-import {
-  createFundExpenseSchema,
-} from "../schema/fundExpense.schema";
+import { createFundExpenseSchema } from "../schema/fundExpense.schema";
 import { auth } from "../middleware/auth";
 
 const router = express.Router();
@@ -27,13 +26,14 @@ router.get(
   "/api/current/fund/expense/:id",
   auth,
   getFundExpensesByIdController
-
 );
+
+router.get("/api/fund/expense/customers-statistic", auth, getUserStatisticData);
+
 router.get(
   "/api/all/fund/expensesUnpaginated",
   auth,
   getAllFundExpensesController
-
 );
 router.post("/api/all/fund/expenses-by-range", auth, getAllFundExpenseByRange);
 

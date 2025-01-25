@@ -29,6 +29,16 @@ export function getAllClientUsers() {
   return UserModel.find({ roles: "CLIENT" });
 }
 
+export async function getUserStatistic() {
+  let result;
+  const allUsers = await UserModel.countDocuments({});
+  const employees = await UserModel.countDocuments({ roles: "EMPLOYEE" });
+  const customers = await UserModel.countDocuments({ roles: "CLIENT" });
+  result = { users: allUsers, employees: employees, customers: customers };
+  return result;
+}
+
+
 export async function allUsersPaginated({
   pageIndex,
   pageSize,

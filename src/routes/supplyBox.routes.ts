@@ -6,13 +6,12 @@ import {
   updateSupplyBoxsByIdController,
   getAllSupplyBoxsController,
   getAllSupplyBoxPaginated,
-  getAllSupplyBoxByRange
+  getAllSupplyBoxByRange,
+  getUserStatisticData,
 } from "../controller/supplyBox.controller";
 // import requireUser from "../middleware/requireUser";
 import validateResource from "../middleware/validateResource";
-import {
-  createSupplyBoxSchema,
-} from "../schema/supplyBox.schema";
+import { createSupplyBoxSchema } from "../schema/supplyBox.schema";
 import { auth } from "../middleware/auth";
 
 const router = express.Router();
@@ -24,18 +23,11 @@ router.post(
 );
 
 //get specific avari
-router.get(
-  "/api/current/supply/box/:id",
-  auth,
-  getSupplyBoxsByIdController
+router.get("/api/current/supply/box/:id", auth, getSupplyBoxsByIdController);
+router.get("/api/all/supply/boxUnpaginated", auth, getAllSupplyBoxsController);
 
-);
-router.get(
-  "/api/all/supply/boxUnpaginated",
-  auth,
-  getAllSupplyBoxsController
+router.get("/api/supplyBox/customers-statistic", auth, getUserStatisticData);
 
-);
 
 router.post("/api/all/supply/box-by-range/", auth, getAllSupplyBoxByRange);
 
