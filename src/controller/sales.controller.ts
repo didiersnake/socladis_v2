@@ -9,10 +9,11 @@ import {
   exportRistourn,
   getSaleById,
   getSaleByRange,
-  updateSaleById
+  getSalesDashboardDataService,
+  updateSaleById,
 } from "../service/sales.service";
 const fs = require("fs-extra");
-import StockModel, { IStock } from "../model/stock.model"
+import StockModel, { IStock } from "../model/stock.model";
 
 export async function createSaleHandler(
   req: Request<{}, {}, CreateSalesInput>,
@@ -22,11 +23,11 @@ export async function createSaleHandler(
 
   try {
     for (const product of body.products) {
-      const existingStock = await StockModel.findOne({ name: product.name});
+      const existingStock = await StockModel.findOne({ name: product.name });
 
       // if (existingStock) {
       //   if (
-      //     Number(existingStock.quantity) >= Number(product.quantity) 
+      //     Number(existingStock.quantity) >= Number(product.quantity)
       //   ) {
       //     let decrementedQuantity = Number(existingStock.quantity);
       //     decrementedQuantity -= Number(product.quantity);
@@ -42,13 +43,14 @@ export async function createSaleHandler(
     }
 
     const sale = await createSale(body);
-    return res.status(201).json([{ message: 'Sales Added Successfully', saleInfo: sale }]);
+    return res
+      .status(201)
+      .json([{ message: "Sales Added Successfully", saleInfo: sale }]);
   } catch (error) {
     console.error(error);
-    return res.status(500).send('An error occurred while processing the sale');
+    return res.status(500).send("An error occurred while processing the sale");
   }
 }
-
 
 export async function createSaleSecondHandler(
   req: Request<{}, {}, CreateSalesInput>,
@@ -59,13 +61,28 @@ export async function createSaleSecondHandler(
   try {
     const sale = await createSale(body);
 
-    return res.status(201).json([{message:"Sales Added Successfully",saleInfo:sale}]);
+    return res
+      .status(201)
+      .json([{ message: "Sales Added Successfully", saleInfo: sale }]);
   } catch (e: any) {
- 
     return res.status(500).send("Sales exists");
   }
 }
 
+export async function getSalesDashboardData(req: Request, res: Response) {
+  const { startDate, endDate } = req.body;
+  try {
+    const salesDashboardData = await getSalesDashboardDataService({
+      startDate,
+      endDate,
+    });
+    res.status(200).json(salesDashboardData);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json([{ message: "Internal Server Error" }]);
+  }
+}
 
 
 //get all user

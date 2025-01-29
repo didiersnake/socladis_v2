@@ -1,14 +1,27 @@
 import SalesModel from "../model/sales.model"
 import { Request, Response } from "express";
 import userModel from "../model/user.model";
+import productModel from "../model/product.model";
+import groupModel from "../model/group.model";
 
 import { FilterQuery } from "mongoose";
-import { createZipFromFolder, groupSalesByClient, writeCsvFilesToFolder } from "../utils/exportRistourn";
+import {
+  createZipFromFolder,
+  groupSalesByClient,
+  writeCsvFilesToFolder,
+} from "../utils/exportRistourn";
+import { getAvarisByRange } from "./avaris.service";
+import { getAllStocks } from "./stock.service";
+import { getSupplyBoxByRange } from "./supplyBox.service";
+import {
+  getAllFundExpense,
+  getFundExpenseByRange,
+} from "./fundExpense.service";
+import { getGroupedData } from "../utils/helper";
 
 const PDFDocument = require("pdfkit");
 const fs = require("fs-extra");
 const archiver = require("archiver");
-
 
 interface SalesQueryParams {
   pageIndex: number;
@@ -17,6 +30,174 @@ interface SalesQueryParams {
   query?: string;
   filterData?: Record<string, any>;
 }
+
+async function getSaleAreaChartData() {
+  const currentYear = new Date().getFullYear() - 1;
+  const startDate = new Date(currentYear, 0, 1).toISOString(); // January 1st of the current year
+  const endDate = new Date(currentYear + 1, 0, 1).toISOString(); // January 1st of the next year
+
+  const sales = await getSaleByRange(startDate, endDate);
+  const ventes = getGroupedData(sales, `total_with_tax`);
+  const d = await getFundExpenseByRange(startDate, endDate);
+  const d_carburant = d.filter((item) => item.modif === "carburant");
+  const d_achats = d.filter((item) => item.modif === "versement en banque");
+  const carburant = getGroupedData(d_carburant, `amount`);
+  const achats = getGroupedData(d_achats, `amount`);
+  return {
+    ventes: ventes,
+    carburant: carburant,
+    achats: achats,
+  };
+}
+
+function getSalesData(sales: any[]) {
+  const ristourn = sales.reduce(
+    (acc: any, curr: { ristourne: any }) => acc + Number(curr.ristourne),
+    0
+  );
+  const precompte = sales
+    .reduce(
+      (acc: any, curr: { withdrawal_amount: any }) =>
+        acc + Number(curr.withdrawal_amount),
+      0
+    )
+    .toFixed(2);
+  const total_ht = sales
+    .reduce(
+      (acc: any, curr: { total_without_tax: any }) =>
+        acc + Number(curr.total_without_tax),
+      0
+    )
+    .toFixed(2);
+
+  const total_tva = sales
+    .reduce(
+      (acc: any, curr: { VAT_amount: any }) => acc + Number(curr.VAT_amount),
+      0
+    )
+    .toFixed(2);
+
+  const total_ttc = sales
+    .reduce(
+      (acc: any, curr: { total_with_tax: any }) =>
+        acc + Number(curr.total_with_tax),
+      0
+    )
+    .toFixed(2);
+
+  const total_packs = sales
+    .flatMap((item) => item.products)
+    .reduce(
+      (acc: any, curr: { quantity: any }) => acc + Number(curr.quantity),
+      0
+    );
+
+  return [
+    {
+      symbol: "VENTES TTC",
+      name: "Total revenue sur les ventes",
+      value: total_ttc,
+    },
+    {
+      symbol: "VENTES HT",
+      name: "Cummule des ventes Hors Tax",
+      value: total_ht,
+    },
+    {
+      symbol: "PACKS",
+      name: "Cummule de packs vendu",
+      value: total_packs,
+    },
+    {
+      symbol: "RISTOURNE",
+      name: "Cummule des ristourne ",
+      value: ristourn,
+    },
+    {
+      symbol: "TVA",
+      name: "Cummule TVA",
+      value: total_tva,
+    },
+    {
+      symbol: "PRECOMPTE",
+      name: "Cummule precompte",
+      value: precompte,
+    },
+  ];
+}
+
+export async function getSalesDashboardDataService(data: {
+  startDate: string;
+  endDate: string;
+}) {
+  const { startDate, endDate } = data;
+  const users = await userModel.countDocuments({ roles: "CLIENT" });
+  const products = await productModel.countDocuments();
+  const teams = await groupModel.countDocuments();
+  const sales = await getSaleByRange(startDate, endDate);
+  const salesData = getSalesData(sales);
+
+  const avaris = (await getAvarisByRange(startDate, endDate)).reduce(
+    (acc: any, curr: { quantity: any }) => acc + Number(curr.quantity),
+    0
+  );
+  const low_stock = (await getAllStocks()).filter(
+    (item) => Number(item.quantity) < Number(item.unitPrice)
+  ).length;
+  const supply_total = (await getSupplyBoxByRange(startDate, endDate))
+    .reduce((acc: any, curr: { amount: any }) => acc + Number(curr.amount), 0)
+    .toFixed(2);
+  const expenseByrange = await getFundExpenseByRange(startDate, endDate);
+  const total_expense = expenseByrange
+    .reduce((acc: any, curr: { amount: any }) => acc + Number(curr.amount), 0)
+    .toFixed(2);
+
+  const achat_expense = expenseByrange
+    .filter((item) => item.modif === "versement en banque")
+    .reduce((acc: any, curr: { amount: any }) => acc + Number(curr.amount), 0)
+    .toFixed(2);
+  // console.log(supply_total, total_expense, achat_expense);
+  const salesReportData = await getSaleAreaChartData();
+
+  const result = {
+    statisticData: {
+      users: users,
+      products: products,
+      teams: teams,
+    },
+    inventory: [
+      ...salesData,
+      {
+        symbol: "CAISSES",
+        name: "Cummule des approvisionements",
+        value: supply_total,
+      },
+      {
+        symbol: "SORTIES",
+        name: "Cummule des depenses",
+        value: total_expense,
+      },
+      {
+        symbol: "ACHATS",
+        name: "Cummule versement en banque",
+        value: achat_expense,
+      },
+      {
+        symbol: "AVARIS",
+        name: "Cummule des avaris",
+        value: avaris,
+      },
+      {
+        symbol: "STOCK FAIBLES",
+        name: "Nombre de produit hors stock",
+        value: low_stock,
+      },
+    ],
+    salesReportData: salesReportData,
+  };
+  return result;
+}
+
 
 export async function createSale(input:Partial<any>) {
   const newSale = SalesModel.create(input)

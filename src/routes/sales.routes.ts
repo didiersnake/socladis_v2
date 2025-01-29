@@ -7,13 +7,12 @@ import {
   updateSaleByIdController,
   getAllSaleController,
   generateRistourn,
-  getAllSalesByRange
+  getAllSalesByRange,
+  getSalesDashboardData,
 } from "../controller/sales.controller";
 // import requireUser from "../middleware/requireUser";
 import validateResource from "../middleware/validateResource";
-import {
-  createSalesSchema,
-} from "../schema/sales.schema";
+import { createSalesSchema } from "../schema/sales.schema";
 import { auth } from "../middleware/auth";
 
 const router = express.Router();
@@ -27,22 +26,14 @@ router.post(
 router.post(
   "/api/new/second/sales",
   validateResource(createSalesSchema),
-  createSaleSecondHandler 
+  createSaleSecondHandler
 );
 
 //get specific sale
-router.get(
-  "/api/current/sale/:id",
-  auth,
-  getSaleByIdController
+router.get("/api/current/sale/:id", auth, getSaleByIdController);
+router.post("/api/all/sales/", auth, getAllSaleController);
 
-);
-router.post(
-  "/api/all/sales/",
-  auth,
-  getAllSaleController
-
-);
+router.post("/sales/dashboard", auth, getSalesDashboardData);
 
 router.post("/api/all/sale-by-range/", auth, getAllSalesByRange);
 
