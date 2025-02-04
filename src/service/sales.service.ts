@@ -18,6 +18,8 @@ import {
   getFundExpenseByRange,
 } from "./fundExpense.service";
 import { getGroupedData } from "../utils/helper";
+import { year } from "../utils/constants";
+import stockModel from "../model/stock.model";
 
 const PDFDocument = require("pdfkit");
 const fs = require("fs-extra");
@@ -31,6 +33,12 @@ interface SalesQueryParams {
   filterData?: Record<string, any>;
 }
 
+async function getLowStock() {
+  return (await stockModel.find()).filter(
+    (item) => Number(item.unitPrice) > Number(item.quantity)
+  );
+}
+
 async function getSaleAreaChartData() {
   const currentYear = new Date().getFullYear() - 1;
   const startDate = new Date(currentYear, 0, 1).toISOString(); // January 1st of the current year
@@ -39,14 +47,26 @@ async function getSaleAreaChartData() {
   const sales = await getSaleByRange(startDate, endDate);
   const ventes = getGroupedData(sales, `total_with_tax`);
   const d = await getFundExpenseByRange(startDate, endDate);
+  const A = await getSupplyBoxByRange(startDate, endDate);
   const d_carburant = d.filter((item) => item.modif === "carburant");
   const d_achats = d.filter((item) => item.modif === "versement en banque");
+  const d_courante = d.filter((item) => item.modif === "courante");
   const carburant = getGroupedData(d_carburant, `amount`);
   const achats = getGroupedData(d_achats, `amount`);
+  const courante = getGroupedData(d_courante, `amount`);
+  const appro = getGroupedData(A, `amount`);
+
+  const result = [
+    { name: "Ventes", data: ventes },
+    { name: "Depenses Carburant", data: carburant },
+    { name: "Achats", data: achats },
+    { name: "Depense Courante", data: courante },
+    { name: "Caisses", data: appro },
+  ];
+
   return {
-    ventes: ventes,
-    carburant: carburant,
-    achats: achats,
+    series: result,
+    categories: year,
   };
 }
 
@@ -158,6 +178,7 @@ export async function getSalesDashboardDataService(data: {
     .toFixed(2);
   // console.log(supply_total, total_expense, achat_expense);
   const salesReportData = await getSaleAreaChartData();
+  const lowStockList = await getLowStock();
 
   const result = {
     statisticData: {
@@ -194,6 +215,7 @@ export async function getSalesDashboardDataService(data: {
       },
     ],
     salesReportData: salesReportData,
+    lowStockList: lowStockList,
   };
   return result;
 }

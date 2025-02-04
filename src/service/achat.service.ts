@@ -1,7 +1,7 @@
 import { FilterQuery } from "mongoose";
 import achatModel from "../model/achat.model"
 import StockModel, { IStock } from "../model/stock.model"
-
+import productModel from "../model/product.model";
 
 interface PurchaseQueryParams {
   pageIndex: number;
@@ -11,34 +11,36 @@ interface PurchaseQueryParams {
   filterData?: Record<string, any>;
 }
 
-export async function createAchat(input:Partial<any>) {
-  const newAchat = await achatModel.create(input)
-console.log('====================================');
-console.log(input);
-console.log('====================================');
+export async function createAchat(input: Partial<any>) {
+  const newAchat = await achatModel.create(input);
+  console.log("====================================");
+  console.log(input);
+  console.log("====================================");
   // Search for the corresponding Stock entry
-  const existingStock = await StockModel.findOne({ name: input.name });
+  const existingStock = await StockModel.findOne({
+    name: input.name,
+  });
   // console.log(existingStock)
   if (existingStock) {
     // If the Stock entry exists, update the quantity and price
     // const currentQuantity = Number(existingStock.quantity)
-    var incrementedQuantity = Number(existingStock.quantity) + Number(input.quantity)
-    console.log("incremented",incrementedQuantity)
-    existingStock.quantity = (incrementedQuantity).toString(); // Assuming quantity is a number
-    existingStock.date = input.date
+    var incrementedQuantity =
+      Number(existingStock.quantity) + Number(input.quantity);
+    console.log("incremented", incrementedQuantity);
+    existingStock.quantity = incrementedQuantity.toString(); // Assuming quantity is a number
+    existingStock.date = input.date;
     await existingStock.save();
-    
-  }
-   else {
+  } else {
+    const getProductDetails = await productModel.findOne({ name: input.name });
     // If the Stock entry doesn't exist, create a new entry
     const newStockEntry: Partial<IStock> = {
-      name: input.name,
+      name: getProductDetails?.name,
       quantity: input.quantity.toString(),
-      unitPrice: input.unitPrice,
-      format: input.format,
+      unitPrice: getProductDetails?.unitPrice,
+      format: getProductDetails?.format,
       status: "",
       date: input.date,
-      category:input.category
+      category: getProductDetails?.category,
       // Set the price based on the Achat price or any other logic
       // price: ... ;
     };

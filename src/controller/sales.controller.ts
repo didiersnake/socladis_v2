@@ -22,25 +22,25 @@ export async function createSaleHandler(
   const body = req.body;
 
   try {
-    for (const product of body.products) {
-      const existingStock = await StockModel.findOne({ name: product.name });
+    // for (const product of body.products) {
+    //   const existingStock = await StockModel.findOne({ name: product.name });
 
-      // if (existingStock) {
-      //   if (
-      //     Number(existingStock.quantity) >= Number(product.quantity)
-      //   ) {
-      //     let decrementedQuantity = Number(existingStock.quantity);
-      //     decrementedQuantity -= Number(product.quantity);
-      //     existingStock.quantity = decrementedQuantity.toString();
+    //   if (existingStock) {
+    //     if (
+    //       Number(existingStock.quantity) >= Number(product.quantity)
+    //     ) {
+    //       let decrementedQuantity = Number(existingStock.quantity);
+    //       decrementedQuantity -= Number(product.quantity);
+    //       existingStock.quantity = decrementedQuantity.toString();
 
-      //     await existingStock.save();
-      //   } else {
-      //     return res.status(400).json([{ message: 'Not enough quantity in the stock to sell ' + product.name }]);
-      //   }
-      // } else {
-      //   return res.status(404).json([{ message: 'Stock not found' }]);
-      // }
-    }
+    //       await existingStock.save();
+    //     } else {
+    //       return res.status(400).json([{ message: 'Not enough quantity in the stock to sell ' + product.name }]);
+    //     }
+    //   } else {
+    //     return res.status(404).json([{ message: 'Stock not found' }]);
+    //   }
+    // }
 
     const sale = await createSale(body);
     return res

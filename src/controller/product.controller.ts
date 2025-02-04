@@ -8,9 +8,8 @@ import {
   deleteProductById,
   getAllProducts,
   getProductById,
-  updateProductById
+  updateProductById,
 } from "../service/product.service";
-import { log } from "console";
 
 export async function createProductHandler(
   req: Request<{}, {}, CreateProductInput>,

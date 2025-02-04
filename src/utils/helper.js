@@ -13,31 +13,20 @@ export async function getCurrentYearData(model) {
 }
 
 export function getGroupedData(data, accumulator) {
-  const grouprdData = data.reduce((acc, curr) => {
+  // Initialize an array with 12 elements (one for each month) filled with 0
+  const monthlyTotals = new Array(12).fill(0);
+
+  data.forEach((curr) => {
     // Get the month and year from the date
     const date = new Date(curr.date);
-    const month = date.toLocaleString("fr-Fr", { month: "short" }); // Full month name
-    const year = date.getFullYear(); // Get the year
-    // Create a key for the month and year
-    const key = `${month} ${year}`;
-    // Initialize the array for the month if it doesn't exist
-    if (!acc[key]) {
-      acc[key] = { monthYear: key, sales: [], total: 0 };
-    }
-    // Add the sale to the corresponding month
-    acc[key].sales.push(curr);
-    acc[key].total += Number(curr[accumulator]); // Cumulatively add the amount
-    return acc;
-  }, {});
-  // Convert the grouped sales object to an array if needed
-  const groupedSalesArray = Object.values(grouprdData).map(
-    ({ monthYear, sales, total }) => ({
-      monthYear,
-      sales,
-      total,
-    })
-  );
-  const result = groupedSalesArray.map((item) => item.total.toFixed(2));
-  console.log(result);
+    const month = date.getMonth(); // Get the month index (0-11)
+    const amount = Number(curr[accumulator]); // Get the amount to accumulate
+
+    // Add the amount to the corresponding month
+    monthlyTotals[month] += amount;
+  });
+
+  // Convert the totals to fixed decimal points if needed
+  const result = monthlyTotals.map((total) => total.toFixed(1));
   return result;
 }
