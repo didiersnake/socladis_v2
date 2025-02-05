@@ -13,13 +13,12 @@ import {
 import { getAvarisByRange } from "./avaris.service";
 import { getAllStocks } from "./stock.service";
 import { getSupplyBoxByRange } from "./supplyBox.service";
-import {
-  getAllFundExpense,
-  getFundExpenseByRange,
-} from "./fundExpense.service";
+import { getFundExpenseByRange } from "./fundExpense.service";
 import { getGroupedData } from "../utils/helper";
 import { year } from "../utils/constants";
 import stockModel from "../model/stock.model";
+import { getAllProducts } from "./product.service";
+import { log } from "console";
 
 const PDFDocument = require("pdfkit");
 const fs = require("fs-extra");
@@ -37,6 +36,28 @@ async function getLowStock() {
   return (await stockModel.find()).filter(
     (item) => Number(item.unitPrice) > Number(item.quantity)
   );
+}
+
+async function getSalePieChartData(startDate: string, endDate: string) {
+  const salesData = (await getSaleByRange(startDate, endDate)).flatMap(
+    (item) => item.products
+  );
+  console.log(salesData.length);
+
+  const products = (await getAllProducts()).map((i) => i.name);
+  let data: number[] = [];
+  products.forEach((elt) => {
+    const qty = salesData
+      .filter((item) => item.name === elt)
+      .reduce((acc, curr) => acc + Number(curr.quantity), 0);
+    data.push(qty);
+  });
+
+  console.log(products, data);
+  return {
+    data: data,
+    labels: products,
+  };
 }
 
 async function getSaleAreaChartData() {
@@ -179,6 +200,7 @@ export async function getSalesDashboardDataService(data: {
   // console.log(supply_total, total_expense, achat_expense);
   const salesReportData = await getSaleAreaChartData();
   const lowStockList = await getLowStock();
+  const salesByCategoriesData = await getSalePieChartData(startDate, endDate);
 
   const result = {
     statisticData: {
@@ -216,19 +238,19 @@ export async function getSalesDashboardDataService(data: {
     ],
     salesReportData: salesReportData,
     lowStockList: lowStockList,
+    salesByCategoriesData: salesByCategoriesData,
   };
   return result;
 }
 
-
-export async function createSale(input:Partial<any>) {
-  const newSale = SalesModel.create(input)
+export async function createSale(input: Partial<any>) {
+  const newSale = SalesModel.create(input);
   return newSale;
 }
 
 //get all user
-export function getAllSales(){
-  return SalesModel.find()
+export function getAllSales() {
+  return SalesModel.find();
 }
 
 export async function allSalesPaginated({
@@ -311,13 +333,19 @@ export async function getSaleByRange(startDate: string, endDate: string) {
 
   if (startDate) {
     filter.$expr.$and.push({
-      $gte: [{ $dateFromString: { dateString: "$date" } }, new Date(startDate)],
+      $gte: [
+        { $dateFromString: { dateString: "$date" } },
+        new Date(startDate).setDate(new Date(startDate).getDate() + 1),
+      ], // add one day to date because date range are -1 when sent
     });
   }
 
   if (endDate) {
     filter.$expr.$and.push({
-      $lte: [{ $dateFromString: { dateString: "$date" } }, new Date(endDate)],
+      $lte: [
+        { $dateFromString: { dateString: "$date" } },
+        new Date(endDate).setDate(new Date(endDate).getDate() + 1),
+      ],
     });
   }
 
